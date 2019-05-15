@@ -48,10 +48,14 @@ class ImageInput extends Component {
   componentWillMount = async () => {
     await loadModels();
     const model = await loadModel2();
-    console.log(model);
+    // console.log(model);
     // this.setState({ faceMatcher: await createMatcher(JSON_PROFILE) });
     const profileEmbeddings = await this.prepareProfileEmbeddings(profileImgArr, model);
-    console.log(profileEmbeddings);
+    // console.log(profileEmbeddings);
+    this.setState({
+      profileEmbeddings: profileEmbeddings,
+      model: model
+    })
     await this.handleImage(this.state.imageURL, profileEmbeddings, model);
   };
 
@@ -118,16 +122,17 @@ class ImageInput extends Component {
     }
   };
 
-  // handleFileChange = async event => {
-  //   if (!!event.target.files[0]) {
-  //     this.resetState();
-  //     await this.setState({
-  //       imageURL: URL.createObjectURL(event.target.files[0]),
-  //       loading: true
-  //     });
-  //     this.handleImage(this.state.imageURL, profileEmbeddings, model);
-  //   }
-  // };
+  handleFileChange = async event => {
+    const { profileEmbeddings, model } = this.state;
+    if (!!event.target.files[0]) {
+      this.resetState();
+      await this.setState({
+        imageURL: URL.createObjectURL(event.target.files[0]),
+        loading: true
+      });
+      this.handleImage(this.state.imageURL, profileEmbeddings, model);
+    }
+  };
 
   resetState = () => {
     this.setState({ ...INIT_STATE });
