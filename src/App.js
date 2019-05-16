@@ -4,7 +4,7 @@ import createHistory from 'history/createBrowserHistory';
 import Header from './components/header';
 import Album from './components/album';
 import Home from './components/home';
-import './App.css';
+// import './App.css';
 // import Classifier from './components/classifier';
 import ImageInput from './components/imageInput';
 

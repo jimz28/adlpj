@@ -17,10 +17,11 @@ const tf = require('@tensorflow/tfjs')
 const testImg = require('../images/leonard1.jpeg');
 const sheldonImg = require('../images/sheldon1.jpeg');
 const leonardImg = require('../images/leonard1.jpeg');
-const pennyImg = require('../images/penny1.jpeg');
+const pennyImg = require('../images/penny2.jpeg');
 const HowardImg = require('../images/howard1.jpeg');
 const RajImg = require('../images/raj1.jpeg');
 const profileImgArr = [sheldonImg, leonardImg, pennyImg, HowardImg, RajImg];
+const namelist = ['Shdeldon', 'Leonard', 'Penny', 'Howard', 'Raj'];
 
 // Import face profile
 // const JSON_PROFILE = require('../descriptors/faceProfiles.json');
@@ -76,13 +77,18 @@ class ImageInput extends Component {
   }
 
   prepareProfileEmbeddings = async (imgArr, model) => {
-    const resizedImages = imgArr.map(async img => {
+    const resizedImages = imgArr.map(async (img, idx) => {
       const res = await extractFaces(img)
-      this.divRef.current.append(res[0]);
+      const show = res[0];
+      show.style.height = '100px';
+      show.style.width = '100px';
+      this.divRef.current.append(show);
+      // return {[namelist[idx]]: this._getResized(res[0])};
       return this._getResized(res[0]);
     });
     const resized = await Promise.all(resizedImages);
     const embeddings = await getProfilePhotoEmbeddings(resized, model);
+    // console.log(embeddings);
     return embeddings;
   }
 
@@ -115,10 +121,13 @@ class ImageInput extends Component {
 
     const res = await extractFaces(image)
     for (let i = 0; i < res.length; i++) {
-      this.divRef2.current.append(res[i]);
+      const show = res[i];
+      show.style.height = '100px';
+      show.style.width = '100px';
+      this.divRef2.current.append(show);
       const resized = this._getResized(res[i]);
-      const result = await matchFace(profileEmbeddings, resized, model, 0.35);
-      console.log(result);
+      const result = await matchFace(profileEmbeddings, resized, model, 0.1);
+      console.log(!!result ? namelist[result] : 'unknown');
     }
   };
 
@@ -196,10 +205,20 @@ class ImageInput extends Component {
           </div>
           {!!drawBox ? drawBox : null}
         </div>
-        <div ref={this.divRef} style={{marginLeft: 150}}>
+        <div
+          style={{
+            position: 'relative',
+            marginTop: 500,
+          }}
+        >
+          Profiles:
         </div>
-        <div ref={this.divRef2}>
+        <div 
+          ref={this.divRef} 
+        >
         </div>
+        <div>Detected Faces from Img above:</div>
+        <div ref={this.divRef2}></div>
         {/* {!!canvasElement ? canvasElement : <div/>} */}
       </div>
     );

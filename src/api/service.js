@@ -27,6 +27,19 @@ export async function getProfilePhotoEmbeddings(profilePhotos, model) {
   return embeddings;
 }
 
+export async function getProfilePhotoEmbeddingsInObj(profilePhotos, model) {
+  let embeddings = [];
+  for (let i = 0; i < profilePhotos.length; i++) {
+    let obj = profilePhotos[i];
+    let key = Object.keys(obj)[0];
+    let value = Object.values(obj)[0];
+    var embedding = await model.predict(value.expandDims());
+    obj[key] = l2_normalize(embedding);
+    embeddings.push(obj);
+  }
+  return embeddings;
+}
+
 
 /**
  * profilePhotos: list of tf.Tensor, shape: (128,)
@@ -39,18 +52,18 @@ export async function getProfilePhotoEmbeddings(profilePhotos, model) {
  */
 export async function matchFace(profilePhotosEmbeddings, face_img, model, threshold=0.35) {
   var targetEmbedding = await l2_normalize(model.predict(face_img.expandDims()));
-  var minScore;
+  var minScore = 1;
   var minIndex;
   for (var i = 0; i < profilePhotosEmbeddings.length; i++) {
     let dist = getDistance(profilePhotosEmbeddings[i], targetEmbedding);
-    console.log(dist);
-    if (dist <= threshold && (!minScore || dist < minScore)) {
+    // console.log(dist);
+    if (dist <= threshold && dist < minScore) {
       minScore = dist;
       minIndex = i;
     }
   }
 
-  if (minScore) {
+  if (minScore !== 1) {
     return minIndex;
   }
   return null;

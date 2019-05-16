@@ -40,11 +40,14 @@ export async function extractFaces(blob) {
   // console.log(img);
 
   const detections = await faceapi.detectAllFaces(img, options)
-  const faceImages = await faceapi.extractFaces(img, detections)
+    .withFaceLandmarks();
+  // console.log(detections);
+  const rectFaces = detections.map(detection => detection.alignedRect);
+  const faceImages = await faceapi.extractFaces(img, rectFaces);
 
-  // const alignedFaceBoxes = await Promise.all(faceImages.map(
+  // const alignedFaceBoxes = await Promise.all(detections.map(
   //   async (faceCanvas, i) => {
-  //     const faceLandmarks = await faceapi.detectLandmarks(faceCanvas)
+  //     const faceLandmarks = await faceapi.extractFaces(faceCanvas)
   //     return faceLandmarks.align(locations[i])
   //   }
   // ))
