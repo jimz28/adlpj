@@ -44,6 +44,7 @@ export async function extractFaces(blob) {
   // console.log(detections);
   const rectFaces = detections.map(detection => detection.alignedRect);
   const faceImages = await faceapi.extractFaces(img, rectFaces);
+  // console.log(faceImages);
 
   // const alignedFaceBoxes = await Promise.all(detections.map(
   //   async (faceCanvas, i) => {

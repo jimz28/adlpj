@@ -2,14 +2,14 @@ import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { 
   loadModels, 
-  // getFullFaceDescription, 
+  getFullFaceDescription, 
   createMatcher, 
   getFaceDetectorOptions,
   detectAllFaces,
   extractFaces  
 } from '../api/face';
 import { loadModel2, matchFace, getProfilePhotoEmbeddings } from '../api/service';
-import { saveAs } from 'file-saver';
+import { Spinner } from 'react-bootstrap';
 const tf = require('@tensorflow/tfjs')
 
 
@@ -24,7 +24,7 @@ const profileImgArr = [sheldonImg, leonardImg, pennyImg, HowardImg, RajImg];
 const namelist = ['Shdeldon', 'Leonard', 'Penny', 'Howard', 'Raj'];
 
 // Import face profile
-// const JSON_PROFILE = require('../descriptors/faceProfiles.json');
+const JSON_PROFILE = require('../descriptors/faceProfiles.json');
 
 // Initial State
 const INIT_STATE = {
@@ -39,34 +39,34 @@ const INIT_STATE = {
 class ImageInput extends Component {
   constructor(props) {
     super(props);
-    this.state = { ...INIT_STATE, faceMatcher: null };
-    this.canvasRef = React.createRef();
+    this.state = { 
+      ...INIT_STATE, 
+      faceMatcher: null,
+      profileEmbeddings: null,
+      model2: null,
+      loading: true ,
+      loadingMsg: 'Loading models...'
+    };
+    // this.canvasRef = React.createRef();
     this.divRef = React.createRef();
     this.divRef2 = React.createRef();
-    this.model2 = null;
   }
 
-  componentWillMount = async () => {
+  componentDidMount = async () => {
     await loadModels();
+    this.setState({ faceMatcher: await createMatcher(JSON_PROFILE) });
     const model = await loadModel2();
-    // console.log(model);
-    // this.setState({ faceMatcher: await createMatcher(JSON_PROFILE) });
+    this.setState({loadingMsg: 'Preparing for profile embeddings...'})
     const profileEmbeddings = await this.prepareProfileEmbeddings(profileImgArr, model);
-    // console.log(profileEmbeddings);
+
     this.setState({
       profileEmbeddings: profileEmbeddings,
-      model: model
-    })
+      model2: model,
+      loadingMsg: ''
+    });
     await this.handleImage(this.state.imageURL, profileEmbeddings, model);
   };
 
-  // componentDidMount() {
-  //   const canvas = this.canvasRef.current;
-  //   const context = canvas.getContext('2d');
-  //   context.fillRect(0, 0, canvas.width, canvas.height);
-  // }
-
-  // shouldn't it be tf functions??
   _cropImage = (img) => {
     const size = Math.min(img.shape[0], img.shape[1]);
     const centerHeight = img.shape[0] / 2;
@@ -77,69 +77,91 @@ class ImageInput extends Component {
   }
 
   prepareProfileEmbeddings = async (imgArr, model) => {
-    const resizedImages = imgArr.map(async (img, idx) => {
-      const res = await extractFaces(img)
+    const faceCanvases = imgArr.map(async (img, idx) => {
+      const res = await extractFaces(img);
       const show = res[0];
+      // console.log(show);
       show.style.height = '100px';
       show.style.width = '100px';
-      this.divRef.current.append(show);
+
       // return {[namelist[idx]]: this._getResized(res[0])};
-      return this._getResized(res[0]);
+      return show;
     });
-    const resized = await Promise.all(resizedImages);
+    const faces = await Promise.all(faceCanvases);
+    // console.log(faces);
+    const resized = faces.map((faceCanvas, idx) => {
+      const face = this._getResized(faceCanvas);
+      let ctx = faceCanvas.getContext("2d");
+      ctx.font = `${faceCanvas.width/4}px Georgia`;
+      ctx.fillStyle = "red";
+      ctx.fillText(namelist[idx], 0, faceCanvas.height);
+      this.divRef.current.append(faceCanvas);
+      return face;
+    });
     const embeddings = await getProfilePhotoEmbeddings(resized, model);
-    // console.log(embeddings);
     return embeddings;
   }
 
   _getResized = (canvas) => {
     const raw = tf.browser.fromPixels(canvas);
     const cropped = this._cropImage(raw); 
-    const resized = tf.image.resizeBilinear(cropped, [160, 160]);
-    return resized;
+    let resized = tf.image.resizeBilinear(cropped, [160, 160]);
+    const normalized =tf.div(resized, 255);
+    normalized.print();
+    return normalized;
   }
 
   handleImage = async (image = this.state.imageURL, profileEmbeddings, model) => {
-    // await getFullFaceDescription(image).then(fullDesc => {
-    //   if (!!fullDesc) {
-    //     console.log(fullDesc)
-    //     // console.log(JSON.stringify(fullDesc[0].descriptor));
-    //     this.setState({
-    //       fullDesc,
-    //       detections: fullDesc.map(fd => fd.detection),
-    //       descriptors: fullDesc.map(fd => fd.descriptor)
-    //     });
-    //   }
-    // });
+    // using face api's tfjs-core model trained in ts
+    await getFullFaceDescription(image).then(fullDesc => {
+      if (!!fullDesc) {
+        // console.log(JSON.stringify(fullDesc[0].descriptor));
+        this.setState({
+          fullDesc,
+          detections: fullDesc.map(fd => fd.detection),
+          descriptors: fullDesc.map(fd => fd.descriptor)
+        });
+      }
+    });
 
-    // if (!!this.state.descriptors && !!this.state.faceMatcher) {
-    //   let match = await this.state.descriptors.map(descriptor =>
-    //     this.state.faceMatcher.findBestMatch(descriptor)
-    //   );
-    //   this.setState({ match });
-    // }
+    if (!!this.state.descriptors && !!this.state.faceMatcher) {
+      let match = await this.state.descriptors.map(descriptor =>
+        this.state.faceMatcher.findBestMatch(descriptor)
+      );
+      this.setState({ match });
+    }
 
+    // using tfjs
     const res = await extractFaces(image)
     for (let i = 0; i < res.length; i++) {
       const show = res[i];
+      // console.log(show);
       show.style.height = '100px';
-      show.style.width = '100px';
-      this.divRef2.current.append(show);
+      show.style.width = '100px';  
       const resized = this._getResized(res[i]);
-      const result = await matchFace(profileEmbeddings, resized, model, 0.1);
-      console.log(!!result ? namelist[result] : 'unknown');
+      const result = await matchFace(profileEmbeddings, resized, model, 0.01);
+
+
+      let ctx = show.getContext("2d");
+      ctx.font = `${show.width/4}px Georgia`;
+      ctx.fillStyle = "red";
+      ctx.fillText(result !== null ? namelist[result] : 'unknown', 0, show.height);
+      this.divRef2.current.append(show);
+      console.log(result !== null ? namelist[result] : 'unknown');
     }
+    this.setState({loading: false});
   };
 
   handleFileChange = async event => {
-    const { profileEmbeddings, model } = this.state;
+    const { profileEmbeddings, model2 } = this.state;
     if (!!event.target.files[0]) {
       this.resetState();
       await this.setState({
         imageURL: URL.createObjectURL(event.target.files[0]),
-        loading: true
+        loading: true,
+        loadingMsg: 'Detecting faces and calculating embeddings...'
       });
-      this.handleImage(this.state.imageURL, profileEmbeddings, model);
+      this.handleImage(this.state.imageURL, profileEmbeddings, model2);
     }
   };
 
@@ -148,8 +170,7 @@ class ImageInput extends Component {
   };
 
   render() {
-    const { imageURL, detections, match, canvasElement } = this.state;
-    // console.log(canvasElement);
+    const { imageURL, detections, match, loading, loadingMsg } = this.state;
 
     let drawBox = null;
     if (!!detections) {
@@ -193,6 +214,15 @@ class ImageInput extends Component {
 
     return (
       <div>
+        {loading ? 
+          // <Spinner animation="grow" />
+          <div>
+            <Spinner animation="border" variant="primary"/>
+            {loadingMsg}
+          </div> 
+          : 
+          <div></div>
+        }
         <input
           id="myFileUpload"
           type="file"

@@ -50,13 +50,13 @@ export async function getProfilePhotoEmbeddingsInObj(profilePhotos, model) {
  * Return:
  *  int: if found it repents the index of profile get matched, null: not found
  */
-export async function matchFace(profilePhotosEmbeddings, face_img, model, threshold=0.35) {
+export async function matchFace(profilePhotosEmbeddings, face_img, model, threshold=0.01) {
   var targetEmbedding = await l2_normalize(model.predict(face_img.expandDims()));
   var minScore = 1;
   var minIndex;
   for (var i = 0; i < profilePhotosEmbeddings.length; i++) {
     let dist = getDistance(profilePhotosEmbeddings[i], targetEmbedding);
-    // console.log(dist);
+    console.log(dist);
     if (dist <= threshold && dist < minScore) {
       minScore = dist;
       minIndex = i;
