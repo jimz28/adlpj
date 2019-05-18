@@ -223,33 +223,44 @@ class ImageInput extends Component {
           : 
           <div></div>
         }
-        <input
-          id="myFileUpload"
-          type="file"
-          onChange={this.handleFileChange}
-          accept=".jpg, .jpeg, .png"
-        />
-        <div style={{ position: 'relative' }}>
-          <div style={{ position: 'absolute' }}>
-            <img src={imageURL} alt="imageURL" />
+        {!loading ? 
+          <div>
+            Profiles:
           </div>
-          {!!drawBox ? drawBox : null}
-        </div>
-        <div
-          style={{
-            position: 'relative',
-            marginTop: 500,
-          }}
-        >
-          Profiles:
-        </div>
+          :
+          <div></div>
+        }
         <div 
           ref={this.divRef} 
         >
         </div>
-        <div>Detected Faces from Img above:</div>
+        {!loading ? 
+          <div>
+            Faces Detected from image below:
+          </div>
+          :
+          <div></div>
+        }
         <div ref={this.divRef2}></div>
-        {/* {!!canvasElement ? canvasElement : <div/>} */}
+        <div 
+          style={{ 
+            position: 'relative',
+            marginTop: 20 
+          }}
+        >
+          <input
+            id="myFileUpload"
+            type="file"
+            onChange={this.handleFileChange}
+            accept=".jpg, .jpeg, .png"
+          />
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute' }}>
+              <img src={imageURL} alt="imageURL" />
+            </div>
+            {!!drawBox ? drawBox : null}
+          </div>
+        </div>
       </div>
     );
   }

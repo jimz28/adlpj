@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import Gallery from "react-photo-gallery";
 
 import { loadModels, getFullFaceDescription, createMatcher } from '../api/face';
-
+import { Spinner } from 'react-bootstrap';
 // Import image to test API
 const testImg = require('../images/group6.jpg');
 
@@ -16,7 +16,9 @@ const INIT_STATE = {
   fullDesc: null,
   detections: null,
   descriptors: null,
-  match: null
+  match: null,
+  loading: true,
+  loadingMsg: 'Loading model...'
 };
 
 
@@ -79,7 +81,10 @@ export default class Clustering extends Component {
     componentWillMount = async () => {
         // const images = this.importAll(require.context('../images', false, /\.(png|jpe?g|svg)$/));
         await loadModels();
-        this.setState({ faceMatcher: await createMatcher(JSON_PROFILE) });
+        this.setState({ 
+            faceMatcher: await createMatcher(JSON_PROFILE),
+            loading: false 
+        });
         for (let i = 0; i < photos.length; i++) {
             await this.handleImage(photos[i].src, i);
         }
@@ -117,16 +122,29 @@ export default class Clustering extends Component {
 
     
     render() {
+        const { loading, loadingMsg } = this.state;
         return (
             <div>
-                <div>All Pictures</div>
-                <Gallery photos={photos} />
-                <div>Sheldon's pictures</div>
-                <Gallery photos={userPhotos["Sheldon"]} />
-                <div>Leonard's pictures</div>
-                <Gallery photos={userPhotos["Leonard"]} />
-                <div>Penny's pictures</div>
-                <Gallery photos={userPhotos["Penny"]} />
+                {loading ?
+                    <div>
+                        <Spinner animation="border" variant="primary"/>
+                        {loadingMsg}
+                    </div>
+                    :
+                    <div>
+                        <div><b>All Pictures:</b></div>
+                        <Gallery photos={photos} />
+                        <br />
+                        <div><b>Sheldon's pictures:</b></div>
+                        <Gallery photos={userPhotos["Sheldon"]} />
+                        <br />
+                        <div><b>Leonard's pictures:</b></div>
+                        <Gallery photos={userPhotos["Leonard"]} />
+                        <br />
+                        <div><b>Penny's pictures:</b></div>
+                        <Gallery photos={userPhotos["Penny"]} />
+                    </div>
+                }
             </div>
         );
     }

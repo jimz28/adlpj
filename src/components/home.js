@@ -1,17 +1,11 @@
 import React, { Component } from 'react';
 
 
-
-export default class Clustering extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {};
-    }
-    
+export default class home extends Component {
     render() {
         return (
             <div>
-                <div>All Pictures</div>
+                Demo site for a frontend-only face recognition and clustering powered by tensorflow.js.
             </div>
         );
     }
