@@ -1,3 +1,5 @@
+// this file implements our function concept that cluster images based on face recognition
+
 import React, { Component } from 'react';
 // import { Link } from 'react-router-dom';
 import Gallery from "react-photo-gallery";
@@ -78,6 +80,7 @@ export default class Clustering extends Component {
         this.state = { ...INIT_STATE, faceMatcher: null };
     }
     
+    // load models, calculate embedding for all pictures
     componentWillMount = async () => {
         // const images = this.importAll(require.context('../images', false, /\.(png|jpe?g|svg)$/));
         await loadModels();
@@ -94,6 +97,7 @@ export default class Clustering extends Component {
     //     return r.keys().map(r);
     // }
 
+    // handle each picture by mapping through and apply similarity match calculation
     handleImage = async (image = this.state.imageURL, idx) => {
         await getFullFaceDescription(image).then(fullDesc => {
           if (!!fullDesc) {
@@ -110,6 +114,8 @@ export default class Clustering extends Component {
           let match = await this.state.descriptors.map(descriptor =>
             this.state.faceMatcher.findBestMatch(descriptor)
           );
+          
+          // clustering: once find a match for a picture with a profile, push into the profiles viweable picture piles 
           match.map(faceMatch => {
             // console.log(faceMatch._label);
             if (faceMatch._label in userPhotos) {

@@ -1,3 +1,5 @@
+// this file handles face recognition and labeling on inputed images
+
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { 
@@ -13,7 +15,7 @@ import { Spinner } from 'react-bootstrap';
 const tf = require('@tensorflow/tfjs')
 
 
-// Import profile image to test API
+// Import profile images
 const testImg = require('../images/leonard1.jpeg');
 const sheldonImg = require('../images/sheldon1.jpeg');
 const leonardImg = require('../images/leonard1.jpeg');
@@ -52,6 +54,7 @@ class ImageInput extends Component {
     this.divRef2 = React.createRef();
   }
 
+  // before the page renders UI, load model into browser, prepare the profile embedings from the pictures
   componentDidMount = async () => {
     await loadModels();
     this.setState({ faceMatcher: await createMatcher(JSON_PROFILE) });
@@ -67,6 +70,7 @@ class ImageInput extends Component {
     await this.handleImage(this.state.imageURL, profileEmbeddings, model);
   };
 
+  // helper function to crop images
   _cropImage = (img) => {
     const size = Math.min(img.shape[0], img.shape[1]);
     const centerHeight = img.shape[0] / 2;
@@ -76,6 +80,7 @@ class ImageInput extends Component {
     return img.slice([beginHeight, beginWidth, 0], [size, size, 3]);
   }
 
+  // extract, align and calculate embeding of faces for profile images
   prepareProfileEmbeddings = async (imgArr, model) => {
     const faceCanvases = imgArr.map(async (img, idx) => {
       const res = await extractFaces(img);
@@ -102,6 +107,7 @@ class ImageInput extends Component {
     return embeddings;
   }
 
+  // helper functions to resize picture to model input format by tf functions
   _getResized = (canvas) => {
     const raw = tf.browser.fromPixels(canvas);
     const cropped = this._cropImage(raw); 
@@ -111,6 +117,7 @@ class ImageInput extends Component {
     return normalized;
   }
 
+  // calculate face embeddings by two model: keras converted model and tensorflow.js trained model
   handleImage = async (image = this.state.imageURL, profileEmbeddings, model) => {
     // using face api's tfjs-core model trained in ts
     await getFullFaceDescription(image).then(fullDesc => {
@@ -152,6 +159,7 @@ class ImageInput extends Component {
     this.setState({loading: false});
   };
 
+  // handle file change, then run an face embedding calc workflow on new inputed imges
   handleFileChange = async event => {
     const { profileEmbeddings, model2 } = this.state;
     if (!!event.target.files[0]) {
@@ -169,6 +177,7 @@ class ImageInput extends Component {
     this.setState({ ...INIT_STATE });
   };
 
+  // UI
   render() {
     const { imageURL, detections, match, loading, loadingMsg } = this.state;
 

@@ -8,14 +8,8 @@ export async function loadModels() {
   await faceapi.loadFaceRecognitionModel(MODEL_URL);
 }
 
+// extract, align faces with face-api.js's pretrained tfjs model
 export async function getFullFaceDescription(blob, inputSize = 512) {
-  // tiny_face_detector options
-  // let scoreThreshold = 0.5;
-  // const OPTION = new faceapi.TinyFaceDetectorOptions({
-  //   inputSize,
-  //   scoreThreshold
-  // });
-  // const useTinyModel = true;
   const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 })
 
   // fetch image to api
@@ -30,6 +24,7 @@ export async function getFullFaceDescription(blob, inputSize = 512) {
   return fullDesc;
 }
 
+// extract, align faces for keras converted model input
 export async function extractFaces(blob) {
   // const options = getFaceDetectorOptions()
   const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 })
@@ -56,6 +51,7 @@ export async function extractFaces(blob) {
   return faceImages;
 }
 
+// match calculation
 const maxDescriptorDistance = 0.6;
 export async function createMatcher(faceProfile) {
   // Create labeled descriptors of member from profile
